@@ -35,18 +35,6 @@ body {
   width:100%;
   max-width:480px;
   padding:20px;
-  position:relative;
-}
-
-.watermark{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%) rotate(-18deg);
-  opacity:.05;
-  width:80vw;
-  max-width:500px;
-  pointer-events:none;
 }
 
 .header{
@@ -74,6 +62,21 @@ h1{
 .settings{
   font-size:28px;
   cursor:pointer;
+}
+
+.progress-wrapper{
+  height:8px;
+  background:#e5e5ea;
+  border-radius:6px;
+  margin:14px 0 18px 0;
+  overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  width:100%;
+  background:purple;
+  transition:width .4s ease, background .4s ease;
 }
 
 .card{
@@ -108,6 +111,16 @@ button{
 .undo{background:#eee}
 .export{background:var(--success);color:white}
 
+.pulse{
+  animation:pulse 1.1s ease 1;
+}
+
+@keyframes pulse{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.05)}
+  100%{transform:scale(1)}
+}
+
 .history{font-size:20px}
 
 .entry{
@@ -134,6 +147,12 @@ button{
 
 .drawer.open{right:0}
 
+.close-drawer{
+  font-size:24px;
+  margin-bottom:12px;
+  cursor:pointer;
+}
+
 .balance{
   font-size:26px;
   font-weight:700;
@@ -148,9 +167,9 @@ button{
 </head>
 <body>
 
-<img src="icon-512.png" class="watermark">
-
 <div class="drawer" id="drawer">
+
+<div class="close-drawer" onclick="toggleDrawer()">✖ Close</div>
 
 <div class="balance" id="balanceDisplay"></div>
 
@@ -171,6 +190,10 @@ button{
 
 <div class="settings" onclick="toggleDrawer()">⚙️</div>
 
+</div>
+
+<div class="progress-wrapper">
+<div id="progressBar" class="progress-bar"></div>
 </div>
 
 <div class="card">
@@ -209,13 +232,45 @@ function getBalance(){
  return parseFloat(localStorage.getItem("balance")||"0");
 }
 
+function getLoaded(){
+ return parseFloat(localStorage.getItem("loaded")||"0");
+}
+
 function setBalance(v){
  localStorage.setItem("balance",v);
  updateBalanceDisplay();
+ updateProgress();
+}
+
+function addLoaded(v){
+ const total=getLoaded()+v;
+ localStorage.setItem("loaded",total);
+ updateProgress();
 }
 
 function updateBalanceDisplay(){
- document.getElementById("balanceDisplay").innerText="Cash remaining: €"+getBalance().toFixed(2);
+ document.getElementById("balanceDisplay").innerText="Cash remaining: "+getBalance().toFixed(2);
+}
+
+function progressColor(p){
+ if(p>80) return "purple";
+ if(p>60) return "blue";
+ if(p>40) return "green";
+ if(p>20) return "gold";
+ if(p>10) return "orange";
+ return "red";
+}
+
+function updateProgress(){
+ const loaded=getLoaded();
+ const balance=getBalance();
+ if(!loaded) return;
+
+ const percent=(balance/loaded)*100;
+
+ const bar=document.getElementById("progressBar");
+ bar.style.width=percent+"%";
+ bar.style.background=progressColor(percent);
 }
 
 function render(){
@@ -233,6 +288,7 @@ function render(){
 
  checkExportVisibility();
  updateBalanceDisplay();
+ updateProgress();
 }
 
 function addEntry(){
@@ -272,17 +328,26 @@ function undoLast(){
 }
 
 function checkExportVisibility(){
+ const btn=document.getElementById("exportBtn");
+
  if(getBalance()<1000){
- document.getElementById("exportBtn").style.display="block";
+ if(btn.style.display==="none"){
+ btn.style.display="block";
+ btn.classList.add("pulse");
+ }
  }else{
- document.getElementById("exportBtn").style.display="none";
+ btn.style.display="none";
  }
 }
 
 function loadCashPrompt(){
  const v=prompt("Enter starting cash amount");
  if(!v)return;
- setBalance(parseFloat(v));
+ const num=parseFloat(v);
+
+ setBalance(getBalance()+num);
+ addLoaded(num);
+
  toggleDrawer();
 }
 
@@ -309,7 +374,7 @@ function exportCSV(){
  a.download=filename();
  a.click();
 
- window.location.href=`mailto:${EMAIL}?subject=ATTACH THE CSV FILE BEFORE SENDING&body=IMPORTANT:\n\n1) Tap attach file\n2) Select the downloaded CSV\n3) Then press SEND`;
+ window.location.href=`mailto:${EMAIL}?subject=⚠️ ATTACH CSV BEFORE SENDING ⚠️&body=📎 ATTACH THE DOWNLOADED CSV FILE\n\n⬇️ STEP 1: TAP ATTACH FILE\n\n📂 STEP 2: SELECT THE DOWNLOADED CSV\n\n✅ STEP 3: PRESS SEND`;
 }
 
 function forceExport(){
