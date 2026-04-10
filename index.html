@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- PWA META -->
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,192 +14,319 @@
 
 <style>
 :root {
-  --bg: #f5f5f7;
-  --card: #ffffff;
-  --accent: #007aff;
-  --danger: #ff3b30;
-  --success: #34c759;
-  --text: #111;
+  --bg:#f5f5f7;
+  --card:#ffffff;
+  --accent:#007aff;
+  --danger:#ff3b30;
+  --success:#34c759;
+  --text:#111;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  justify-content: center;
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
 }
 
-.container {
-  width: 100%;
-  max-width: 480px;
-  padding: 20px;
+.container{
+  width:100%;
+  max-width:480px;
+  padding:20px;
+  position:relative;
 }
 
-h1 {
-  font-size: 42px;
-  font-weight: 800;
-  text-align: center;
+.watermark{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%) rotate(-18deg);
+  opacity:.05;
+  width:80vw;
+  max-width:500px;
+  pointer-events:none;
 }
 
-.card {
-  background: var(--card);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
 
-input {
-  width: 100%;
-  font-size: 26px;
-  padding: 18px;
-  border-radius: 16px;
-  border: none;
-  margin-bottom: 15px;
-  background: #f2f2f2;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 
-button {
-  width: 100%;
-  font-size: 26px;
-  padding: 18px;
-  border-radius: 18px;
-  border: none;
-  font-weight: 700;
-  margin-bottom: 10px;
+.brand img{
+  width:42px;
 }
 
-.add { background: var(--accent); color: white; }
-.undo { background: #eee; }
-.export { background: var(--success); color: white; }
-
-.history { font-size: 20px; }
-
-.entry {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+h1{
+  font-size:42px;
+  font-weight:800;
+  margin:0;
 }
 
-.small {
-  font-size: 14px;
-  opacity: .5;
+.settings{
+  font-size:28px;
+  cursor:pointer;
 }
+
+.card{
+  background:var(--card);
+  border-radius:24px;
+  padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.05);
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  font-size:26px;
+  padding:18px;
+  border-radius:16px;
+  border:none;
+  margin-bottom:15px;
+  background:#f2f2f2;
+}
+
+button{
+  width:100%;
+  font-size:26px;
+  padding:18px;
+  border-radius:18px;
+  border:none;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.add{background:var(--accent);color:white}
+.undo{background:#eee}
+.export{background:var(--success);color:white}
+
+.history{font-size:20px}
+
+.entry{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid #eee;
+}
+
+.small{font-size:14px;opacity:.5}
+
+.drawer{
+  position:fixed;
+  right:-320px;
+  top:0;
+  width:300px;
+  height:100%;
+  background:white;
+  box-shadow:-10px 0 30px rgba(0,0,0,.1);
+  padding:20px;
+  transition:.3s;
+  z-index:5;
+}
+
+.drawer.open{right:0}
+
+.balance{
+  font-size:26px;
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+.menu-btn{
+  background:#eee
+}
+
 </style>
 </head>
 <body>
 
+<img src="icon-512.png" class="watermark">
+
+<div class="drawer" id="drawer">
+
+<div class="balance" id="balanceDisplay"></div>
+
+<button class="menu-btn" onclick="loadCashPrompt()">LOAD CASH</button>
+
+<button class="menu-btn" onclick="forceExport()">EXPORT NOW</button>
+
+</div>
+
 <div class="container">
+
+<div class="header">
+
+<div class="brand">
+<img src="icon-192.png">
 <h1>TapLog</h1>
+</div>
+
+<div class="settings" onclick="toggleDrawer()">⚙️</div>
+
+</div>
 
 <div class="card">
+
 <input id="desc" placeholder="What did you buy?" autofocus>
 <input id="amount" placeholder="Amount" inputmode="decimal">
 
 <button class="add" onclick="addEntry()">ADD</button>
 <button class="undo" onclick="undoLast()">UNDO LAST</button>
-<button class="export" onclick="exportCSV()">EXPORT CSV</button>
+
+<button id="exportBtn" class="export" onclick="exportCSV()" style="display:none">EXPORT CSV</button>
+
 </div>
 
 <div class="card history" id="history"></div>
+
 </div>
 
 <script>
-const EMAIL = "store-hazel-7h@icloud.com";
 
-function now() {
-  return new Date().toISOString().replace("T", " ").slice(0, 19);
+const EMAIL="store-hazel-7h@icloud.com";
+
+function now(){
+ return new Date().toISOString().replace("T"," ").slice(0,19);
 }
 
-function load() {
-  return JSON.parse(localStorage.getItem("taplog") || "[]");
+function load(){
+ return JSON.parse(localStorage.getItem("taplog")||"[]");
 }
 
-function save(data) {
-  localStorage.setItem("taplog", JSON.stringify(data));
+function save(data){
+ localStorage.setItem("taplog",JSON.stringify(data));
 }
 
-function render() {
-  const data = load().slice().reverse();
-  const el = document.getElementById("history");
-  el.innerHTML = data.map(e => `
-    <div class="entry">
-      <div>
-        <div>${e.desc}</div>
-        <div class="small">${e.time}</div>
-      </div>
-      <div>${e.amount}</div>
-    </div>
-  `).join("");
+function getBalance(){
+ return parseFloat(localStorage.getItem("balance")||"0");
 }
 
-function addEntry() {
-  const desc = document.getElementById("desc");
-  const amount = document.getElementById("amount");
-
-  if (!amount.value) return;
-
-  const data = load();
-
-  data.push({
-    time: now(),
-    desc: desc.value || "",
-    amount: amount.value
-  });
-
-  save(data);
-
-  desc.value = "";
-  amount.value = "";
-
-  desc.focus();
-
-  render();
+function setBalance(v){
+ localStorage.setItem("balance",v);
+ updateBalanceDisplay();
 }
 
-function undoLast() {
-  const data = load();
-
-  if (!data.length) return;
-
-  data.pop();
-
-  save(data);
-
-  render();
+function updateBalanceDisplay(){
+ document.getElementById("balanceDisplay").innerText="Cash remaining: €"+getBalance().toFixed(2);
 }
 
-function exportCSV() {
-  const data = load();
+function render(){
+ const data=load().slice().reverse();
+ const el=document.getElementById("history");
+ el.innerHTML=data.map(e=>`
+ <div class="entry">
+ <div>
+ <div>${e.desc}</div>
+ <div class="small">${e.time}</div>
+ </div>
+ <div>${e.amount}</div>
+ </div>
+ `).join("");
 
-  if (!data.length) return;
+ checkExportVisibility();
+ updateBalanceDisplay();
+}
 
-  let csv = "Timestamp,Description,Amount\n";
+function addEntry(){
+ const desc=document.getElementById("desc");
+ const amount=document.getElementById("amount");
 
-  data.forEach(e => {
-    csv += `${e.time},${e.desc},${e.amount}\n`;
-  });
+ if(!amount.value)return;
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
+ const val=parseFloat(amount.value);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "expenses.csv";
-  a.click();
+ const data=load();
 
-  window.location.href = `mailto:${EMAIL}?subject=Expense CSV attached&body=CSV downloaded. Attach file and send.`;
+ data.push({time:now(),desc:desc.value||"",amount:val});
+
+ save(data);
+
+ setBalance(getBalance()-val);
+
+ desc.value="";
+ amount.value="";
+ desc.focus();
+
+ render();
+}
+
+function undoLast(){
+ const data=load();
+ if(!data.length)return;
+
+ const last=data.pop();
+
+ save(data);
+
+ setBalance(getBalance()+parseFloat(last.amount));
+
+ render();
+}
+
+function checkExportVisibility(){
+ if(getBalance()<1000){
+ document.getElementById("exportBtn").style.display="block";
+ }else{
+ document.getElementById("exportBtn").style.display="none";
+ }
+}
+
+function loadCashPrompt(){
+ const v=prompt("Enter starting cash amount");
+ if(!v)return;
+ setBalance(parseFloat(v));
+ toggleDrawer();
+}
+
+function filename(){
+ const t=new Date().toISOString().replace(/[:.]/g,"-");
+ return "taplog_"+t+".csv";
+}
+
+function exportCSV(){
+ const data=load();
+ if(!data.length)return;
+
+ let csv="Timestamp,Description,Amount\n";
+
+ data.forEach(e=>{
+ csv+=`${e.time},${e.desc},${e.amount}\n`;
+ });
+
+ const blob=new Blob([csv],{type:"text/csv"});
+ const url=URL.createObjectURL(blob);
+
+ const a=document.createElement("a");
+ a.href=url;
+ a.download=filename();
+ a.click();
+
+ window.location.href=`mailto:${EMAIL}?subject=ATTACH THE CSV FILE BEFORE SENDING&body=IMPORTANT:\n\n1) Tap attach file\n2) Select the downloaded CSV\n3) Then press SEND`;
+}
+
+function forceExport(){
+ exportCSV();
+ toggleDrawer();
+}
+
+function toggleDrawer(){
+ document.getElementById("drawer").classList.toggle("open");
 }
 
 render();
 
-/* SERVICE WORKER REGISTRATION */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("sw.js");
 }
+
 </script>
 
 </body>
