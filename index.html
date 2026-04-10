@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TapLog</title>
+<style>
+
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --accent: #007aff;
+  --danger: #ff3b30;
+  --text: #111;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 42px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+input {
+  width: 100%;
+  font-size: 26px;
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  margin-bottom: 15px;
+  background: #f2f2f2;
+}
+
+button {
+  width: 100%;
+  font-size: 26px;
+  padding: 18px;
+  border-radius: 18px;
+  border: none;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.add {
+  background: var(--accent);
+  color: white;
+}
+
+.undo {
+  background: #eee;
+}
+
+.export {
+  background: #34c759;
+  color: white;
+}
+
+.delete {
+  background: var(--danger);
+  color: white;
+}
+
+.history {
+  font-size: 20px;
+}
+
+.entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.small {
+  font-size: 14px;
+  opacity: .5;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>TapLog</h1>
+
+<div class="card">
+
+<input id="desc" placeholder="What did you buy?" autofocus>
+
+<input id="amount" placeholder="Amount" inputmode="decimal">
+
+<button class="add" onclick="addEntry()">ADD</button>
+
+<button class="undo" onclick="undoLast()">UNDO LAST</button>
+
+<button class="export" onclick="exportCSV()">EXPORT CSV</button>
+
+</div>
+
+<div class="card history" id="history"></div>
+
+</div>
+
+<script>
+
+const EMAIL = "79-pinkies-assigns@icloud.com";
+
+function now() {
+  return new Date().toISOString().replace("T", " ").slice(0, 19);
+}
+
+function load() {
+  return JSON.parse(localStorage.getItem("taplog") || "[]");
+}
+
+function save(data) {
+  localStorage.setItem("taplog", JSON.stringify(data));
+}
+
+function render() {
+  const data = load().slice().reverse();
+  const el = document.getElementById("history");
+  el.innerHTML = data.map(e => `
+    <div class="entry">
+      <div>
+        <div>${e.desc}</div>
+        <div class="small">${e.time}</div>
+      </div>
+      <div>${e.amount}</div>
+    </div>
+  `).join("");
+}
+
+function addEntry() {
+  const desc = document.getElementById("desc");
+  const amount = document.getElementById("amount");
+
+  if (!amount.value) return;
+
+  const data = load();
+
+  data.push({
+    time: now(),
+    desc: desc.value || "",
+    amount: amount.value
+  });
+
+  save(data);
+
+  desc.value = "";
+  amount.value = "";
+
+  desc.focus();
+
+  render();
+}
+
+function undoLast() {
+  const data = load();
+
+  if (!data.length) return;
+
+  data.pop();
+
+  save(data);
+
+  render();
+}
+
+function exportCSV() {
+
+  const data = load();
+
+  if (!data.length) return;
+
+  let csv = "Timestamp,Description,Amount\n";
+
+  data.forEach(e => {
+    csv += `${e.time},${e.desc},${e.amount}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "expenses.csv";
+
+  a.click();
+
+  window.location.href = `mailto:${EMAIL}?subject=Expense CSV attached&body=CSV downloaded. Attach file and send.`;
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
