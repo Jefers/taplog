@@ -3,14 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TapLog</title>
-<style>
 
+<!-- PWA META -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TapLog">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<title>TapLog</title>
+
+<style>
 :root {
   --bg: #f5f5f7;
   --card: #ffffff;
   --accent: #007aff;
   --danger: #ff3b30;
+  --success: #34c759;
   --text: #111;
 }
 
@@ -63,28 +72,11 @@ button {
   margin-bottom: 10px;
 }
 
-.add {
-  background: var(--accent);
-  color: white;
-}
+.add { background: var(--accent); color: white; }
+.undo { background: #eee; }
+.export { background: var(--success); color: white; }
 
-.undo {
-  background: #eee;
-}
-
-.export {
-  background: #34c759;
-  color: white;
-}
-
-.delete {
-  background: var(--danger);
-  color: white;
-}
-
-.history {
-  font-size: 20px;
-}
+.history { font-size: 20px; }
 
 .entry {
   display: flex;
@@ -97,36 +89,27 @@ button {
   font-size: 14px;
   opacity: .5;
 }
-
 </style>
 </head>
 <body>
 
 <div class="container">
-
 <h1>TapLog</h1>
 
 <div class="card">
-
 <input id="desc" placeholder="What did you buy?" autofocus>
-
 <input id="amount" placeholder="Amount" inputmode="decimal">
 
 <button class="add" onclick="addEntry()">ADD</button>
-
 <button class="undo" onclick="undoLast()">UNDO LAST</button>
-
 <button class="export" onclick="exportCSV()">EXPORT CSV</button>
-
 </div>
 
 <div class="card history" id="history"></div>
-
 </div>
 
 <script>
-
-const EMAIL = "79-pinkies-assigns@icloud.com";
+const EMAIL = "export@example.com";
 
 function now() {
   return new Date().toISOString().replace("T", " ").slice(0, 19);
@@ -191,7 +174,6 @@ function undoLast() {
 }
 
 function exportCSV() {
-
   const data = load();
 
   if (!data.length) return;
@@ -203,22 +185,22 @@ function exportCSV() {
   });
 
   const blob = new Blob([csv], { type: "text/csv" });
-
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
-
   a.href = url;
   a.download = "expenses.csv";
-
   a.click();
 
   window.location.href = `mailto:${EMAIL}?subject=Expense CSV attached&body=CSV downloaded. Attach file and send.`;
-
 }
 
 render();
 
+/* SERVICE WORKER REGISTRATION */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
